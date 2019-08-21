@@ -1,12 +1,13 @@
 package main
 
 import (
-	"../../pkg/grpc"
 	"context"
+	"git.deem.com/fijigroup/shared/fiji-grpc-core-library/pkg/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"log"
 )
-type server struct {}
+
+type server struct{}
 
 func (s *server) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*helloworld.HelloReply, error) {
 	log.Printf("Received: %v", in.Name)
@@ -19,7 +20,7 @@ func main() {
 	gs := grpc.Server{}
 	gs.EnableReflection(true)
 	s := gs.NewServer()
-	helloworld.RegisterGreeterServer(s,  &server{})
+	helloworld.RegisterGreeterServer(s, &server{})
 	err := gs.ListenAndServe("0.0.0.0", 50051)
 	if err != nil {
 		log.Fatalf("%v")
