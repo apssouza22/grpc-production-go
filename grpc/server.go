@@ -67,7 +67,7 @@ func (s *Server) AwaitTermination() {
 
 func (s *Server) cleanup() {
 	log.Println("Stopping the server")
-	s.server.Stop()
+	s.server.GracefulStop()
 	log.Println("Closing the listener")
 	s.listener.Close()
 	log.Println("End of Program")

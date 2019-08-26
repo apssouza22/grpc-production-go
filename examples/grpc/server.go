@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"git.deem.com/fijigroup/shared/fiji-grpc-core-library/pkg/grpc"
+	"git.deem.com/fijigroup/shared/fiji-grpc-core-library/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"log"
 )
