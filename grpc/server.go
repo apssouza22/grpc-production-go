@@ -4,19 +4,25 @@ import (
 	"errors"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"syscall"
+	"time"
 )
 
 type Server struct {
-	server            *grpc.Server
-	listener          net.Listener
-	options           []grpc.ServerOption
-	enabledReflection bool
-	shutdownHook      func()
+	server             *grpc.Server
+	listener           net.Listener
+	options            []grpc.ServerOption
+	enabledReflection  bool
+	shutdownHook       func()
+	enabledHealthcheck bool
 }
 
 func (s *Server) AddOption(o grpc.ServerOption) {
@@ -27,9 +33,20 @@ func (s *Server) EnableReflection(e bool) {
 	s.enabledReflection = e
 }
 
+func (s *Server) EnableHealthcheck(e bool) {
+	s.enabledHealthcheck = e
+}
+
 func (s *Server) NewServer() *grpc.Server {
 	s.server = grpc.NewServer(s.options...)
 	return s.server
+}
+
+func (s *Server) setKeepaliveParams(duration time.Duration) {
+	// MaxConnectionAge is just to avoid long connection, to facilitate load balancing
+	// MaxConnectionAgeGrace will torn them, default to infinity
+	keepAlive := grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: duration})
+	s.options = append(s.options, keepAlive)
 }
 
 func (s *Server) ListenAndServe(address string, port uint) error {
@@ -40,6 +57,10 @@ func (s *Server) ListenAndServe(address string, port uint) error {
 	if err != nil {
 		msg := fmt.Sprintf("Failed to listen: %v", err)
 		return errors.New(msg)
+	}
+
+	if s.enabledHealthcheck {
+		grpc_health_v1.RegisterHealthServer(s.server, health.NewServer())
 	}
 
 	if s.enabledReflection {
@@ -56,9 +77,9 @@ func (s *Server) AddShutdownHook(f func()) {
 }
 
 func (s *Server) AwaitTermination() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	<-c
+	interruptSignal := make(chan os.Signal, 1)
+	signal.Notify(interruptSignal, os.Interrupt, syscall.SIGTERM)
+	<-interruptSignal
 	s.cleanup()
 	if s.shutdownHook != nil {
 		s.shutdownHook()
