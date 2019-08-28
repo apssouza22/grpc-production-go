@@ -3,6 +3,8 @@ package grpc
 import (
 	"errors"
 	"fmt"
+	_ "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -47,6 +49,16 @@ func (s *Server) setKeepaliveParams(duration time.Duration) {
 	// MaxConnectionAgeGrace will torn them, default to infinity
 	keepAlive := grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: duration})
 	s.options = append(s.options, keepAlive)
+}
+
+func (s *Server) setStreamInterceptors(interceptors []grpc.StreamServerInterceptor) {
+	chain := grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(interceptors...))
+	s.options = append(s.options, chain)
+}
+
+func (s *Server) setUnaryInterceptors(interceptors []grpc.UnaryServerInterceptor) {
+	chain := grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(interceptors...))
+	s.options = append(s.options, chain)
 }
 
 func (s *Server) ListenAndServe(address string, port uint) error {
