@@ -44,19 +44,21 @@ func (s *Server) NewServer() *grpc.Server {
 	return s.server
 }
 
-func (s *Server) setKeepaliveParams(duration time.Duration) {
-	// MaxConnectionAge is just to avoid long connection, to facilitate load balancing
-	// MaxConnectionAgeGrace will torn them, default to infinity
+// MaxConnectionAge is a duration for the maximum amount of time a
+// connection may exist before it will be closed by sending a GoAway.
+// MaxConnectionAge is just to avoid long connection, to facilitate load balancing
+// MaxConnectionAgeGrace will torn them, default to infinity
+func (s *Server) SetKeepaliveMaxConnectionAge(duration time.Duration) {
 	keepAlive := grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: duration})
 	s.options = append(s.options, keepAlive)
 }
 
-func (s *Server) setStreamInterceptors(interceptors []grpc.StreamServerInterceptor) {
+func (s *Server) SetStreamInterceptors(interceptors []grpc.StreamServerInterceptor) {
 	chain := grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(interceptors...))
 	s.options = append(s.options, chain)
 }
 
-func (s *Server) setUnaryInterceptors(interceptors []grpc.UnaryServerInterceptor) {
+func (s *Server) SetUnaryInterceptors(interceptors []grpc.UnaryServerInterceptor) {
 	chain := grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(interceptors...))
 	s.options = append(s.options, chain)
 }

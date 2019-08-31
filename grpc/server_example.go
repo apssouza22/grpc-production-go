@@ -2,13 +2,9 @@ package grpc_server
 
 import (
 	"context"
-	execution_time "git.deem.com/fijigroup/shared/fiji-grpc-core-library/grpc/interceptor"
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	interceptors "git.deem.com/fijigroup/shared/fiji-grpc-core-library/grpc/interceptor"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
-	"google.golang.org/grpc/status"
 	"log"
 )
 
@@ -40,31 +36,15 @@ func ServerInitialization() {
 
 func addInterceptors(s *Server) {
 	ui := []grpc.UnaryServerInterceptor{
-		grpc_auth.UnaryServerInterceptor(exampleAuthFunc),
-		execution_time.UnaryLogExecutionTime(),
+		interceptors.UnaryAuthentication(),
+		interceptors.UnaryLogExecutionTime(),
+		interceptors.UnaryLogRequestCanceled(),
 	}
 	si := []grpc.StreamServerInterceptor{
-		grpc_auth.StreamServerInterceptor(exampleAuthFunc),
-		execution_time.StreamLogExecutionTime(),
+		interceptors.StreamAuthentication(),
+		interceptors.StreamLogExecutionTime(),
+		interceptors.StreamLogRequestCanceled(),
 	}
-	s.setUnaryInterceptors(ui)
-	s.setStreamInterceptors(si)
-}
-
-func exampleAuthFunc(ctx context.Context) (context.Context, error) {
-	token, err := grpc_auth.AuthFromMD(ctx, "bearer")
-	if err != nil {
-		return nil, err
-	}
-	if token != "123" {
-		return nil, status.Errorf(codes.InvalidArgument, "Retrieving metadata is failed")
-	}
-	grpc_ctxtags.Extract(ctx).Set("auth.sub", "info")
-
-	type authInfo struct {
-		name string
-	}
-
-	newCtx := context.WithValue(ctx, "tokenInfo", authInfo{"foo"})
-	return newCtx, nil
+	s.SetUnaryInterceptors(ui)
+	s.SetStreamInterceptors(si)
 }
