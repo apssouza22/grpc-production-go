@@ -1,4 +1,4 @@
-module git.deem.com/fijigroup/shared/fiji-grpc-core-library
+module github.com/apssouza22/grpc-server
 
 go 1.12
 
