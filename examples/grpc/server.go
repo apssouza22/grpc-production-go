@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"git.deem.com/fijigroup/shared/fiji-grpc-core-library/grpc"
+	grpc_server "git.deem.com/fijigroup/shared/fiji-grpc-core-library/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"log"
 )
@@ -15,18 +15,5 @@ func (s *server) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*he
 }
 
 func main() {
-	// if we crash the go code, we get the file name and line number
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	gs := grpc.Server{}
-	gs.EnableReflection(true)
-	s := gs.NewServer()
-	helloworld.RegisterGreeterServer(s, &server{})
-	err := gs.ListenAndServe("0.0.0.0", 50051)
-	if err != nil {
-		log.Fatalf("%v")
-	}
-	gs.AddShutdownHook(func() {
-		log.Print("Shutdown call")
-	})
-	gs.AwaitTermination()
+	grpc_server.ServerInitialization()
 }

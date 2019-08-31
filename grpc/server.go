@@ -1,4 +1,4 @@
-package grpc
+package grpc_server
 
 import (
 	"errors"
