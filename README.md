@@ -1,5 +1,5 @@
 # GRPC server base
-A GRPC base for production application 
+A GRPC base ready for production 
 
 - Added health check service
 - Added shutdown hook

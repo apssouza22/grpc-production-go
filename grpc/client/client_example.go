@@ -2,7 +2,7 @@ package grpc_client
 
 import (
 	"context"
-	"github.com/apssouza22/grpc-server/grpc/client/interceptor"
+	"github.com/apssouza22/grpc-server-go/grpc/client/interceptor"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/health/grpc_health_v1"

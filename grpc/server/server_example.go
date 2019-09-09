@@ -2,7 +2,7 @@ package grpc_server
 
 import (
 	"context"
-	interceptors "github.com/apssouza22/grpc-server/grpc/server/interceptor"
+	interceptors "github.com/apssouza22/grpc-server-go/grpc/server/interceptor"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"log"
