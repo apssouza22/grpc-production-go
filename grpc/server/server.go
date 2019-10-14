@@ -17,52 +17,84 @@ import (
 	"time"
 )
 
-type Server struct {
-	server             *grpc.Server
-	listener           net.Listener
+//GRPC server interface
+type GrpcServer interface {
+	Start(address string, port uint) error
+	AwaitTermination(shutdownHook func())
+	RegisterService(reg func(*grpc.Server))
+}
+
+//GRPC server builder
+type GrpcServerBuilder struct {
 	options            []grpc.ServerOption
 	enabledReflection  bool
 	shutdownHook       func()
 	enabledHealthCheck bool
 }
 
-func (s *Server) AddOption(o grpc.ServerOption) {
-	s.options = append(s.options, o)
+type grpcServer struct {
+	server   *grpc.Server
+	listener net.Listener
 }
 
-func (s *Server) EnableReflection(e bool) {
-	s.enabledReflection = e
+//DialOption configures how we set up the connection.
+func (sb *GrpcServerBuilder) AddOption(o grpc.ServerOption) {
+	sb.options = append(sb.options, o)
 }
 
-func (s *Server) EnableHealthCheck(e bool) {
-	s.enabledHealthCheck = e
+// EnableReflection enables the reflection
+// gRPC Server Reflection provides information about publicly-accessible gRPC services on a server,
+// and assists clients at runtime to construct RPC requests and responses without precompiled service information.
+// It is used by gRPC CLI, which can be used to introspect server protos and send/receive test RPCs.
+//Warning! We should not have this enabled in production
+func (sb *GrpcServerBuilder) EnableReflection(e bool) {
+	sb.enabledReflection = e
 }
 
-func (s *Server) NewServer() *grpc.Server {
-	s.server = grpc.NewServer(s.options...)
-	return s.server
-}
-
+// SetKeepaliveMaxConnectionAge set the MaxConnectionAge param to the server
 // MaxConnectionAge is a duration for the maximum amount of time a
 // connection may exist before it will be closed by sending a GoAway.
 // MaxConnectionAge is just to avoid long connection, to facilitate load balancing
 // MaxConnectionAgeGrace will torn them, default to infinity
-func (s *Server) SetKeepaliveMaxConnectionAge(duration time.Duration) {
+func (sb *GrpcServerBuilder) SetKeepaliveMaxConnectionAge(duration time.Duration) {
 	keepAlive := grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: duration})
-	s.options = append(s.options, keepAlive)
+	sb.AddOption(keepAlive)
 }
 
-func (s *Server) SetStreamInterceptors(interceptors []grpc.StreamServerInterceptor) {
+// SetStreamInterceptors set a list of interceptors to the Grpc server for stream connection
+// By default, gRPC doesn't allow one to have more than one interceptor either on the client nor on the server side.
+// By using `grpc_middleware` we are able to provides convenient method to add a list of interceptors
+func (sb *GrpcServerBuilder) SetStreamInterceptors(interceptors []grpc.StreamServerInterceptor) {
 	chain := grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(interceptors...))
-	s.options = append(s.options, chain)
+	sb.AddOption(chain)
 }
 
-func (s *Server) SetUnaryInterceptors(interceptors []grpc.UnaryServerInterceptor) {
+// SetUnaryInterceptors set a list of interceptors to the Grpc server for unary connection
+// By default, gRPC doesn't allow one to have more than one interceptor either on the client nor on the server side.
+// By using `grpc_middleware` we are able to provides convenient method to add a list of interceptors
+func (sb *GrpcServerBuilder) SetUnaryInterceptors(interceptors []grpc.UnaryServerInterceptor) {
 	chain := grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(interceptors...))
-	s.options = append(s.options, chain)
+	sb.AddOption(chain)
 }
 
-func (s *Server) ListenAndServe(address string, port uint) error {
+//Build is responsible for building a Fiji GRPC server
+func (sb *GrpcServerBuilder) Build() GrpcServer {
+	srv := grpc.NewServer(sb.options...)
+	grpc_health_v1.RegisterHealthServer(srv, health.NewServer())
+
+	if sb.enabledReflection {
+		reflection.Register(srv)
+	}
+	return &grpcServer{srv, nil}
+}
+
+// RegisterService register the services to the server
+func (s grpcServer) RegisterService(reg func(*grpc.Server)) {
+	reg(s.server)
+}
+
+// Start the GRPC server
+func (s *grpcServer) Start(address string, port uint) error {
 	var err error
 	add := fmt.Sprintf("%s:%d", address, port)
 	s.listener, err = net.Listen("tcp", add)
@@ -72,34 +104,25 @@ func (s *Server) ListenAndServe(address string, port uint) error {
 		return errors.New(msg)
 	}
 
-	if s.enabledHealthCheck {
-		grpc_health_v1.RegisterHealthServer(s.server, health.NewServer())
-	}
-
-	if s.enabledReflection {
-		reflection.Register(s.server)
-	}
 	go s.serv()
 
 	log.Printf("Server started on port: %d \n", port)
 	return nil
 }
 
-func (s *Server) AddShutdownHook(f func()) {
-	s.shutdownHook = f
-}
-
-func (s *Server) AwaitTermination() {
+// AwaitTermination makes the program wait for the signal termination
+// Valid signal termination (SIGINT, SIGTERM)
+func (s *grpcServer) AwaitTermination(shutdownHook func()) {
 	interruptSignal := make(chan os.Signal, 1)
-	signal.Notify(interruptSignal, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(interruptSignal, syscall.SIGINT, syscall.SIGTERM)
 	<-interruptSignal
 	s.cleanup()
-	if s.shutdownHook != nil {
-		s.shutdownHook()
+	if shutdownHook != nil {
+		shutdownHook()
 	}
 }
 
-func (s *Server) cleanup() {
+func (s *grpcServer) cleanup() {
 	log.Println("Stopping the server")
 	s.server.GracefulStop()
 	log.Println("Closing the listener")
@@ -107,7 +130,7 @@ func (s *Server) cleanup() {
 	log.Println("End of Program")
 }
 
-func (s *Server) serv() {
+func (s *grpcServer) serv() {
 	if err := s.server.Serve(s.listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

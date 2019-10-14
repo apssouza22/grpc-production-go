@@ -19,23 +19,22 @@ func ServerInitialization() {
 	// if we crash the go code, we get the file name and line number
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	gs := Server{}
-	addInterceptors(&gs)
-	gs.EnableReflection(true)
-	gs.EnableHealthCheck(true)
-	s := gs.NewServer()
-	helloworld.RegisterGreeterServer(s, &server{})
-	err := gs.ListenAndServe("0.0.0.0", 50051)
+	builder := GrpcServerBuilder{}
+	addInterceptors(&builder)
+	builder.EnableReflection(true)
+	builder.EnableHealthCheck(true)
+	s := builder.Build()
+	helloworld.RegisterGreeterServer(s.GetServer(), &server{})
+	err := s.Start("0.0.0.0", 50051)
 	if err != nil {
-		log.Fatalf("%v")
+		log.Fatalf("%v", err)
 	}
-	gs.AddShutdownHook(func() {
-		log.Print("Shutdown call")
+	s.AwaitTermination(func() {
+		log.Print("Shutting down the server")
 	})
-	gs.AwaitTermination()
 }
 
-func addInterceptors(s *Server) {
+func addInterceptors(s *GrpcServerBuilder) {
 	ui := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryAuthentication(),
 		interceptors.UnaryLogExecutionTime(),
