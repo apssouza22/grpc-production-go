@@ -9,3 +9,4 @@ A GRPC base ready for production
 - Added server example
 - Added Client example (timeout, healthcheck)
 - Added client interceptor (timeout log)
+- Unit tests using a In memory communication between client and server

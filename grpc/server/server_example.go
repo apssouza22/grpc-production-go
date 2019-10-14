@@ -22,9 +22,8 @@ func ServerInitialization() {
 	builder := GrpcServerBuilder{}
 	addInterceptors(&builder)
 	builder.EnableReflection(true)
-	builder.EnableHealthCheck(true)
 	s := builder.Build()
-	helloworld.RegisterGreeterServer(s.GetServer(), &server{})
+	s.RegisterService(serviceRegister)
 	err := s.Start("0.0.0.0", 50051)
 	if err != nil {
 		log.Fatalf("%v", err)
@@ -32,6 +31,10 @@ func ServerInitialization() {
 	s.AwaitTermination(func() {
 		log.Print("Shutting down the server")
 	})
+}
+
+func serviceRegister(sv *grpc.Server) {
+	helloworld.RegisterGreeterServer(sv, &server{})
 }
 
 func addInterceptors(s *GrpcServerBuilder) {
