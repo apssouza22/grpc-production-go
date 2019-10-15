@@ -1,12 +1,12 @@
 # GRPC server base
-A GRPC base ready for production 
+This GRPC server base provides:
 
-- Added health check service
-- Added shutdown hook
-- Added keep alive params
-- Added server interceptors(auth, request canceled, execution time)
-- Added idempotent check
-- Added server example
-- Added Client example (timeout, healthcheck)
-- Added client interceptor (timeout log)
+- Health check service
+- Shutdown hook
+- Keep alive params
+- Server interceptors(auth, request canceled, execution time)
+- Idempotent check
+- Server example
+- Client example (timeout, healthcheck)
+- Client interceptor (timeout log)
 - Unit tests using a In memory communication between client and server
