@@ -3,25 +3,23 @@ package testing
 
 import (
 	"context"
+	interceptors "github.com/apssouza22/grpc-server-go/grpc/server/interceptor"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
-	"google.golang.org/grpc/test/bufconn"
-	"log"
 	"testing"
 )
 
-var lis *bufconn.Listener
-var srv *grpc.Server
+var server GrpcServer
 
 func init() {
-	srv, lis = GetInProcessingGRPCServer()
-	helloworld.RegisterGreeterServer(srv, &mockedService{})
-	go func() {
-		if err := srv.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
-		}
-	}()
+	builder := GrpcServerBuilder{}
+	builder.SetUnaryInterceptors(interceptors.GetDefaultUnaryServerInterceptors())
+	server = builder.Build()
+	server.RegisterService(func(server *grpc.Server) {
+		helloworld.RegisterGreeterServer(server, &mockedService{})
+	})
+	server.Start()
 }
 
 type mockedService struct{}
@@ -33,7 +31,7 @@ func (s *mockedService) SayHello(ctx context.Context, in *helloworld.HelloReques
 //TestSayHello will test the HelloWorld service using A in memory data transfer instead of network
 func TestSayHello(t *testing.T) {
 	ctx := context.Background()
-	clientConn, err := GetInProcessingClientConn(ctx, lis)
+	clientConn, err := GetInProcessingClientConn(ctx, server.GetListener())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -44,7 +42,7 @@ func TestSayHello(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SayHello failed: %v", err)
 	}
-	srv.Stop()
+	server.Cleanup()
 	clientConn.Close()
 	assert.Equal(t, resp.Message, "This is a mocked service test")
 }

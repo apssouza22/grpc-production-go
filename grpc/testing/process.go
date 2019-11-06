@@ -17,10 +17,10 @@ func GetInProcessingClientConn(ctx context.Context, listener *bufconn.Listener) 
 	return conn, err
 }
 
-func GetInProcessingGRPCServer() (*grpc.Server, *bufconn.Listener) {
+func GetInProcessingGRPCServer(options []grpc.ServerOption) (*grpc.Server, *bufconn.Listener) {
 	bufferSize := 1024 * 1024
 	listener := bufconn.Listen(bufferSize)
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(options...)
 	return srv, listener
 }
 

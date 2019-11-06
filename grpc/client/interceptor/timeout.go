@@ -9,25 +9,26 @@ import (
 	"time"
 )
 
-func WithClientUnaryInterceptor() grpc.DialOption {
-	return grpc.WithUnaryInterceptor(
-		func(
-			ctx context.Context,
-			method string,
-			req interface{},
-			reply interface{},
-			cc *grpc.ClientConn,
-			invoker grpc.UnaryInvoker,
-			opts ...grpc.CallOption,
-		) error {
-			start := time.Now()
-			err := invoker(ctx, method, req, reply, cc, opts...)
-			return handleError(err, method, start)
-		})
+//UnaryTimeoutInterceptor monitor the DeadlineExceeded error and log it
+func UnaryTimeoutInterceptor() grpc.UnaryClientInterceptor {
+	return func(
+		ctx context.Context,
+		method string,
+		req interface{},
+		reply interface{},
+		cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker,
+		opts ...grpc.CallOption,
+	) error {
+		start := time.Now()
+		err := invoker(ctx, method, req, reply, cc, opts...)
+		return handleError(err, method, start)
+	}
 }
 
-func WithClientStreamInterceptor() grpc.DialOption {
-	return grpc.WithStreamInterceptor(func(
+//StreamTimeoutInterceptor monitor the DeadlineExceeded error and log it
+func StreamTimeoutInterceptor() grpc.StreamClientInterceptor {
+	return func(
 		ctx context.Context,
 		desc *grpc.StreamDesc,
 		cc *grpc.ClientConn,
@@ -38,7 +39,7 @@ func WithClientStreamInterceptor() grpc.DialOption {
 		stream, err := streamer(ctx, desc, cc, method, opts...)
 		err = handleError(err, method, start)
 		return stream, err
-	})
+	}
 }
 
 func handleError(err error, method string, start time.Time) error {
@@ -53,7 +54,7 @@ func handleError(err error, method string, start time.Time) error {
 		return err
 	}
 	log.Printf(
-		"Timeout - Invoked RPC method=%s; Duration=%s; Error=%v",
+		"Timeout - Invoked RPC method=%s; Duration=%s; Error=%+v",
 		method,
 		time.Since(start), err,
 	)
