@@ -2,6 +2,6 @@ package main
 
 import grpc_client "github.com/apssouza22/grpc-server-go/client"
 
-func main() {
+func run() {
 	grpc_client.TimeoutLogExample()
 }
