@@ -2,7 +2,7 @@ package grpc_server
 
 import (
 	"context"
-	interceptors "github.com/apssouza22/grpc-server-go/grpc/server/interceptor"
+	interceptors "github.com/apssouza22/grpc-server-go/serverinterceptor"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"log"
@@ -39,13 +39,11 @@ func serviceRegister(sv *grpc.Server) {
 
 func addInterceptors(s *GrpcServerBuilder) {
 	ui := []grpc.UnaryServerInterceptor{
-		interceptors.UnaryAuthentication(),
-		interceptors.UnaryLogExecutionTime(),
+		interceptors.UnaryAuditRequest(),
 		interceptors.UnaryLogRequestCanceled(),
 	}
 	si := []grpc.StreamServerInterceptor{
-		interceptors.StreamAuthentication(),
-		interceptors.StreamLogExecutionTime(),
+		interceptors.StreamAuditRequest(),
 		interceptors.StreamLogRequestCanceled(),
 	}
 	s.SetUnaryInterceptors(ui)

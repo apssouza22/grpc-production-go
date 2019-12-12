@@ -1,35 +1,30 @@
-//This is a example how to use a in processing GRPC server that use memory instead of network
 package testing
 
 import (
 	"context"
-	interceptors "github.com/apssouza22/grpc-server-go/grpc/server/interceptor"
+	"github.com/apssouza22/grpc-server-go/testdata"
+	"github.com/apssouza22/grpc-server-go/util"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"testing"
 )
 
-var server GrpcServer
+var server GrpcInProcessingServer
 
-func init() {
-	builder := GrpcServerBuilder{}
-	builder.SetUnaryInterceptors(interceptors.GetDefaultUnaryServerInterceptors())
+func serverStart() {
+	builder := GrpcInProcessingServerBuilder{}
+	builder.SetUnaryInterceptors(util.GetDefaultUnaryServerInterceptors())
 	server = builder.Build()
 	server.RegisterService(func(server *grpc.Server) {
-		helloworld.RegisterGreeterServer(server, &mockedService{})
+		helloworld.RegisterGreeterServer(server, &testdata.MockedService{})
 	})
 	server.Start()
 }
 
-type mockedService struct{}
-
-func (s *mockedService) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*helloworld.HelloReply, error) {
-	return &helloworld.HelloReply{Message: "This is a mocked service " + in.Name}, nil
-}
-
 //TestSayHello will test the HelloWorld service using A in memory data transfer instead of network
 func TestSayHello(t *testing.T) {
+	serverStart()
 	ctx := context.Background()
 	clientConn, err := GetInProcessingClientConn(ctx, server.GetListener())
 	if err != nil {

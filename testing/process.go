@@ -11,7 +11,7 @@ func GetInProcessingClientConn(ctx context.Context, listener *bufconn.Listener) 
 	conn, err := grpc.DialContext(
 		ctx,
 		"bufconn",
-		grpc.WithContextDialer(getBufDialer(listener)),
+		grpc.WithContextDialer(GetBufDialer(listener)),
 		grpc.WithInsecure(),
 	)
 	return conn, err
@@ -24,7 +24,7 @@ func GetInProcessingGRPCServer(options []grpc.ServerOption) (*grpc.Server, *bufc
 	return srv, listener
 }
 
-func getBufDialer(listener *bufconn.Listener) func(context.Context, string) (net.Conn, error) {
+func GetBufDialer(listener *bufconn.Listener) func(context.Context, string) (net.Conn, error) {
 	return func(ctx context.Context, url string) (net.Conn, error) {
 		return listener.Dial()
 	}

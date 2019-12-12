@@ -1,3 +1,5 @@
+// In Processing server uses memory to transfer data between the server and the client
+// This is ideal for testing propose as it not require networking to run integration testes
 package testing
 
 import (
@@ -11,7 +13,7 @@ import (
 )
 
 //GRPC server interface
-type GrpcServer interface {
+type GrpcInProcessingServer interface {
 	Start() error
 	AwaitTermination(shutdownHook func())
 	RegisterService(reg func(*grpc.Server))
@@ -19,20 +21,20 @@ type GrpcServer interface {
 	GetListener() *bufconn.Listener
 }
 
-//GRPC server builder
-type GrpcServerBuilder struct {
+//GRPC in-processing server builder
+type GrpcInProcessingServerBuilder struct {
 	options []grpc.ServerOption
 }
 
 //DialOption configures how we set up the connection.
-func (sb *GrpcServerBuilder) AddOption(o grpc.ServerOption) {
+func (sb *GrpcInProcessingServerBuilder) AddOption(o grpc.ServerOption) {
 	sb.options = append(sb.options, o)
 }
 
 // SetStreamInterceptors set a list of interceptors to the Grpc server for stream connection
 // By default, gRPC doesn't allow one to have more than one interceptor either on the client nor on the server side.
 // By using `grpc_middleware` we are able to provides convenient method to add a list of interceptors
-func (sb *GrpcServerBuilder) SetStreamInterceptors(interceptors []grpc.StreamServerInterceptor) {
+func (sb *GrpcInProcessingServerBuilder) SetStreamInterceptors(interceptors []grpc.StreamServerInterceptor) {
 	chain := grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(interceptors...))
 	sb.AddOption(chain)
 }
@@ -40,13 +42,13 @@ func (sb *GrpcServerBuilder) SetStreamInterceptors(interceptors []grpc.StreamSer
 // SetUnaryInterceptors set a list of interceptors to the Grpc server for unary connection
 // By default, gRPC doesn't allow one to have more than one interceptor either on the client nor on the server side.
 // By using `grpc_middleware` we are able to provides convenient method to add a list of interceptors
-func (sb *GrpcServerBuilder) SetUnaryInterceptors(interceptors []grpc.UnaryServerInterceptor) {
+func (sb *GrpcInProcessingServerBuilder) SetUnaryInterceptors(interceptors []grpc.UnaryServerInterceptor) {
 	chain := grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(interceptors...))
 	sb.AddOption(chain)
 }
 
 //Build is responsible for building a Fiji GRPC server
-func (sb *GrpcServerBuilder) Build() GrpcServer {
+func (sb *GrpcInProcessingServerBuilder) Build() GrpcInProcessingServer {
 	server, listener := GetInProcessingGRPCServer(sb.options)
 	return &grpcServer{server, listener}
 }
@@ -86,9 +88,7 @@ func (s *grpcServer) AwaitTermination(shutdownHook func()) {
 }
 
 func (s *grpcServer) Cleanup() {
-	log.Println("Stopping the server")
 	s.server.Stop()
-	log.Println("Closing the listener")
 	s.listener.Close()
 	log.Println("Server stopped")
 }

@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-//GRPC server interface
+//Fiji GRPC server interface
 type GrpcServer interface {
 	Start(address string, port uint) error
 	AwaitTermination(shutdownHook func())
@@ -106,7 +106,7 @@ func (s *grpcServer) Start(address string, port uint) error {
 
 	go s.serv()
 
-	log.Printf("Server started on port: %d \n", port)
+	log.Infof("grpcServer started on port: %d ", port)
 	return nil
 }
 
@@ -123,15 +123,15 @@ func (s *grpcServer) AwaitTermination(shutdownHook func()) {
 }
 
 func (s *grpcServer) cleanup() {
-	log.Println("Stopping the server")
+	log.Info("Stopping the server")
 	s.server.GracefulStop()
-	log.Println("Closing the listener")
+	log.Info("Closing the listener")
 	s.listener.Close()
-	log.Println("End of Program")
+	log.Info("End of Program")
 }
 
 func (s *grpcServer) serv() {
 	if err := s.server.Serve(s.listener); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Errorf("failed to serve: %v", err)
 	}
 }

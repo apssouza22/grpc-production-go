@@ -2,8 +2,7 @@ package grpc_client
 
 import (
 	"context"
-	interceptors "github.com/apssouza22/grpc-server-go/grpc/server/interceptor"
-	"google.golang.org/grpc"
+	"github.com/apssouza22/grpc-server-go/util"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
@@ -12,13 +11,13 @@ import (
 )
 
 func TimeoutLogExample() {
-	cc, err := grpc.Dial("localhost:50051",
-		grpc.WithInsecure(),
-		interceptors.GetDefaultUnaryClientInterceptors(),
-	)
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
+	clientBuilder := GrpcClientBuilder{}
+	clientBuilder.WithInsecure()
+	clientBuilder.WithContext(context.Background())
+	clientBuilder.WithStreamInterceptors(util.GetDefaultStreamClientInterceptors())
+	clientBuilder.WithUnaryInterceptors(util.GetDefaultUnaryClientInterceptors())
+	cc, err := clientBuilder.GetConn("localhost", "50051")
+
 	defer cc.Close()
 	ctx := context.Background()
 	md := metadata.Pairs("user", "user", "pass", "123")
@@ -28,7 +27,6 @@ func TimeoutLogExample() {
 	}
 	timeout := time.Minute * 1
 	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
 	client := helloworld.NewGreeterClient(cc)
 	request := &helloworld.HelloRequest{
 		Name: "mike",
@@ -45,4 +43,5 @@ func TimeoutLogExample() {
 	}
 	log.Printf("%v", helloReply)
 
+	defer cancel()
 }
