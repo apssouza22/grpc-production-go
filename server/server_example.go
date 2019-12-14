@@ -41,10 +41,12 @@ func addInterceptors(s *GrpcServerBuilder) {
 	ui := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryAuditRequest(),
 		interceptors.UnaryLogRequestCanceled(),
+		interceptors.UnaryAuthentication(),
 	}
 	si := []grpc.StreamServerInterceptor{
 		interceptors.StreamAuditRequest(),
 		interceptors.StreamLogRequestCanceled(),
+		interceptors.StreamAuthentication(),
 	}
 	s.SetUnaryInterceptors(ui)
 	s.SetStreamInterceptors(si)
