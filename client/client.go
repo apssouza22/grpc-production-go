@@ -6,6 +6,7 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 	"strings"
 )
 
@@ -16,6 +17,7 @@ type GrpcClientConnBuilder interface {
 	WithInsecure()
 	WithUnaryInterceptors(interceptors []grpc.UnaryClientInterceptor)
 	WithStreamInterceptors(interceptors []grpc.StreamClientInterceptor)
+	WithKeepAliveParams(params keepalive.ClientParameters)
 	GetConn(addr string, port string) (*grpc.ClientConn, error)
 }
 
@@ -41,6 +43,18 @@ func (b *GrpcClientBuilder) WithOptions(opts ...grpc.DialOption) {
 // WithInsecure set the connection as insecure
 func (b *GrpcClientBuilder) WithInsecure() {
 	b.options = append(b.options, grpc.WithInsecure())
+}
+
+// WithKeepAliveParams set the keep alive params
+// ClientParameters is used to set keepalive parameters on the client-side.
+// These configure how the client will actively probe to notice when a
+// connection is broken and send pings so intermediaries will be aware of the
+// liveness of the connection. Make sure these parameters are set in
+// coordination with the keepalive policy on the server, as incompatible
+// settings can result in closing of connection.
+func (b *GrpcClientBuilder) WithKeepAliveParams(params keepalive.ClientParameters) {
+	keepAlive := grpc.WithKeepaliveParams(params)
+	b.options = append(b.options, keepAlive)
 }
 
 // WithUnaryInterceptors set a list of interceptors to the Grpc client for unary connection

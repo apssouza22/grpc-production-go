@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 //Fiji GRPC server interface
@@ -51,13 +50,9 @@ func (sb *GrpcServerBuilder) EnableReflection(e bool) {
 	sb.enabledReflection = e
 }
 
-// SetKeepaliveMaxConnectionAge set the MaxConnectionAge param to the server
-// MaxConnectionAge is a duration for the maximum amount of time a
-// connection may exist before it will be closed by sending a GoAway.
-// MaxConnectionAge is just to avoid long connection, to facilitate load balancing
-// MaxConnectionAgeGrace will torn them, default to infinity
-func (sb *GrpcServerBuilder) SetKeepaliveMaxConnectionAge(duration time.Duration) {
-	keepAlive := grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: duration})
+// ServerParameters is used to set keepalive and max-age parameters on the server-side.
+func (sb *GrpcServerBuilder) SetServerParameters(serverParams keepalive.ServerParameters) {
+	keepAlive := grpc.KeepaliveParams(serverParams)
 	sb.AddOption(keepAlive)
 }
 

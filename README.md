@@ -4,7 +4,7 @@ This GRPC project provides:
 - Health check service
 - Shutdown hook
 - Keep alive params
-- Server interceptors(auth, request canceled, execution time)
+- Server interceptors(auth, request canceled, execution time, panic recovery)
 - Idempotent check
 - Server example
 - Client example (timeout, healthcheck)

@@ -47,7 +47,7 @@ func TimeoutLogExample() {
 	defer cancel()
 }
 
-func LoadbalanceExample() {
+func LoadbalancingExample() {
 	clientBuilder := GrpcClientBuilder{}
 	clientBuilder.WithInsecure()
 	clientBuilder.WithContext(context.Background())

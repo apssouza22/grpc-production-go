@@ -2,7 +2,7 @@ package grpc_server
 
 import (
 	"context"
-	interceptors "github.com/apssouza22/grpc-server-go/serverinterceptor"
+	"github.com/apssouza22/grpc-server-go/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/metadata"
@@ -14,6 +14,8 @@ type server struct{}
 
 func (s *server) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*helloworld.HelloReply, error) {
 	log.Printf("Received: %v", in.Name)
+	md, _ := metadata.FromIncomingContext(ctx)
+	log.Print(md)
 	hostname, err := os.Hostname()
 	if err != nil {
 		log.Printf("Unable to get hostname %v", err)
@@ -47,16 +49,6 @@ func serviceRegister(sv *grpc.Server) {
 }
 
 func addInterceptors(s *GrpcServerBuilder) {
-	ui := []grpc.UnaryServerInterceptor{
-		interceptors.UnaryAuditRequest(),
-		interceptors.UnaryLogRequestCanceled(),
-		interceptors.UnaryAuthentication(),
-	}
-	si := []grpc.StreamServerInterceptor{
-		interceptors.StreamAuditRequest(),
-		interceptors.StreamLogRequestCanceled(),
-		interceptors.StreamAuthentication(),
-	}
-	s.SetUnaryInterceptors(ui)
-	s.SetStreamInterceptors(si)
+	s.SetUnaryInterceptors(util.GetDefaultUnaryServerInterceptors())
+	s.SetStreamInterceptors(util.GetDefaultStreamServerInterceptors())
 }
