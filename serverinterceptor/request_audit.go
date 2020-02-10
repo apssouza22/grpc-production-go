@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -34,6 +35,7 @@ func UnaryAuditRequest() grpc.UnaryServerInterceptor {
 		resp, err := handler(ctx, req)
 		mkAuditEntry(
 			start,
+			info.FullMethod,
 			md["authority"],
 			md["content-type"],
 			md["user-agent"],
@@ -65,6 +67,7 @@ func StreamAuditRequest() grpc.StreamServerInterceptor {
 		err = handler(srv, stream)
 		mkAuditEntry(
 			start,
+			info.FullMethod,
 			md["authority"],
 			md["content-type"],
 			md["user-agent"],
@@ -76,15 +79,10 @@ func StreamAuditRequest() grpc.StreamServerInterceptor {
 	}
 }
 
-func mkAuditEntry(
-	start time.Time,
-	authorities []string,
-	contentTypes []string,
-	userAgents []string,
-	ip net.Addr,
-	fullMethod string,
-	err error,
-) {
+func mkAuditEntry(start time.Time, requestMethod string, authorities []string, contentTypes []string, userAgents []string, ip net.Addr, fullMethod string, err error) {
+	if strings.Contains(requestMethod, "Health/Check") {
+		return
+	}
 	status := "OK"
 	if err != nil {
 		status = "KO"
