@@ -22,7 +22,7 @@ func serverStart() {
 	server.Start()
 }
 
-//TestSayHello will test the HelloWorld service using A in memory data transfer instead of network
+//TestSayHello will test the HelloWorld service using A in memory data transfer instead of the normal networking
 func TestSayHello(t *testing.T) {
 	serverStart()
 	ctx := context.Background()

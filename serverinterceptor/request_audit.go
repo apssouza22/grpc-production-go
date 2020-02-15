@@ -13,8 +13,15 @@ import (
 	"time"
 )
 
+var healthCheckMethodName = "/grpc.health.v1.Health/Check"
+
+// SetHealthCheckMethodName changes the default health check method name
+func SetHealthCheckMethodName(methodName string) {
+	healthCheckMethodName = methodName
+}
+
 // Logging request information for Unary requests
-func UnaryAuditRequest() grpc.UnaryServerInterceptor {
+func UnaryAuditServiceRequest() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
@@ -33,11 +40,9 @@ func UnaryAuditRequest() grpc.UnaryServerInterceptor {
 
 		start := time.Now()
 		resp, err := handler(ctx, req)
-		mkAuditEntry(
+		logRequest(
 			start,
 			info.FullMethod,
-			md["authority"],
-			md["content-type"],
 			md["user-agent"],
 			peer.Addr,
 			info.FullMethod,
@@ -49,7 +54,7 @@ func UnaryAuditRequest() grpc.UnaryServerInterceptor {
 }
 
 // Logging request information for Stream requests
-func StreamAuditRequest() grpc.StreamServerInterceptor {
+func StreamAuditServiceRequest() grpc.StreamServerInterceptor {
 	return func(
 		srv interface{},
 		stream grpc.ServerStream,
@@ -65,11 +70,9 @@ func StreamAuditRequest() grpc.StreamServerInterceptor {
 		}
 		start := time.Now()
 		err = handler(srv, stream)
-		mkAuditEntry(
+		logRequest(
 			start,
 			info.FullMethod,
-			md["authority"],
-			md["content-type"],
 			md["user-agent"],
 			peer.Addr,
 			info.FullMethod,
@@ -79,8 +82,8 @@ func StreamAuditRequest() grpc.StreamServerInterceptor {
 	}
 }
 
-func mkAuditEntry(start time.Time, requestMethod string, authorities []string, contentTypes []string, userAgents []string, ip net.Addr, fullMethod string, err error) {
-	if strings.Contains(requestMethod, "Health/Check") {
+func logRequest(start time.Time, requestMethod string, userAgents []string, ip net.Addr, fullMethod string, err error) {
+	if isHealthCheckRequest(requestMethod) {
 		return
 	}
 	status := "OK"
@@ -88,17 +91,22 @@ func mkAuditEntry(start time.Time, requestMethod string, authorities []string, c
 		status = "KO"
 	}
 	auditEntry := log.Fields{
-		"authority":    authorities,
-		"content-type": contentTypes,
-		"user-agent":   userAgents,
-		"peer":         ip,
-		"took_ns":      time.Since(start),
-		"status":       status,
-		"err":          err,
+		"user-agent": userAgents,
+		"peer":       ip,
+		"took_ns":    time.Since(start),
+		"status":     status,
+		"err":        err,
 	}
 	if err != nil {
 		log.WithFields(auditEntry).Error(fullMethod)
 	} else {
 		log.WithFields(auditEntry).Info(fullMethod)
 	}
+}
+
+func isHealthCheckRequest(requestMethod string) bool {
+	if strings.Contains(requestMethod, "Health/Check") {
+		return true
+	}
+	return false
 }

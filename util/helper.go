@@ -20,7 +20,7 @@ func requestErrorHandler(p interface{}) (err error) {
 // GetDefaultUnaryServerInterceptors returns the default interceptors server unary connections
 func GetDefaultUnaryServerInterceptors() []grpc.UnaryServerInterceptor {
 	return []grpc.UnaryServerInterceptor{
-		interceptors.UnaryAuditRequest(),
+		interceptors.UnaryAuditServiceRequest(),
 		interceptors.UnaryLogRequestCanceled(),
 		//Recovery handlers should typically be last in the chain so that other middleware
 		// (e.g. logging) can operate on the recovered state instead of being directly affected by any panic
@@ -31,7 +31,7 @@ func GetDefaultUnaryServerInterceptors() []grpc.UnaryServerInterceptor {
 // GetDefaultStreamServerInterceptors returns the default interceptors for server streams connections
 func GetDefaultStreamServerInterceptors() []grpc.StreamServerInterceptor {
 	return []grpc.StreamServerInterceptor{
-		interceptors.StreamAuditRequest(),
+		interceptors.StreamAuditServiceRequest(),
 		interceptors.StreamLogRequestCanceled(),
 		grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandler(requestErrorHandler)),
 	}
