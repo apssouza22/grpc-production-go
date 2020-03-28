@@ -26,7 +26,7 @@ func serverStart() {
 func TestSayHello(t *testing.T) {
 	serverStart()
 	ctx := context.Background()
-	clientConn, err := GetInProcessingClientConn(ctx, server.GetListener())
+	clientConn, err := GetInProcessingClientConn(ctx, server.GetListener(), []grpc.DialOption{})
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}

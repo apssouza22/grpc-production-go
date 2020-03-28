@@ -47,5 +47,5 @@ func (b *InProcessingClientBuilder) GetConn(addr string, port string) (*grpc.Cli
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return GetInProcessingClientConn(context.Background(), b.Server.GetListener())
+	return GetInProcessingClientConn(context.Background(), b.Server.GetListener(), b.options)
 }

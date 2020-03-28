@@ -7,12 +7,13 @@ import (
 	"net"
 )
 
-func GetInProcessingClientConn(ctx context.Context, listener *bufconn.Listener) (*grpc.ClientConn, error) {
+func GetInProcessingClientConn(ctx context.Context, listener *bufconn.Listener, options []grpc.DialOption) (*grpc.ClientConn, error) {
+	dialOptions := append(options, grpc.WithContextDialer(GetBufDialer(listener)))
+	dialOptions = append(dialOptions, grpc.WithInsecure()) // Required to always set insecure for in-processing
 	conn, err := grpc.DialContext(
 		ctx,
 		"bufconn",
-		grpc.WithContextDialer(GetBufDialer(listener)),
-		grpc.WithInsecure(),
+		dialOptions...,
 	)
 	return conn, err
 }
