@@ -20,3 +20,5 @@ Here are the main features:
  
  Please refer to the /examples folder
  
+ ## That's all. Please leave a star if this project helped you!
+ 
