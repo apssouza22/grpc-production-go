@@ -8,6 +8,7 @@ import (
 )
 
 //UnaryPropagateHeaderInterceptor copy given fields from Incoming request into Outgoing request
+// Empty array will make the interceptor copy all metadata in the context
 func UnaryPropagateHeaderInterceptor(fields []string) grpc.UnaryClientInterceptor {
 	return func(
 		ctx context.Context,
@@ -29,6 +30,7 @@ func UnaryPropagateHeaderInterceptor(fields []string) grpc.UnaryClientIntercepto
 }
 
 //StreamPropagateHeaderInterceptor copy given fields from Incoming request into Outgoing request
+// Empty array will make the interceptor copy all metadata in the context
 func StreamPropagateHeaderInterceptor(fields []string) grpc.StreamClientInterceptor {
 	return func(
 		ctx context.Context,
@@ -50,7 +52,7 @@ func StreamPropagateHeaderInterceptor(fields []string) grpc.StreamClientIntercep
 func transformMapToPairs(md map[string][]string, fields []string) []string {
 	var kv []string
 	for key, value := range md {
-		if !contains(fields, key) {
+		if len(fields) > 0 && !contains(fields, key) {
 			continue
 		}
 		for _, v := range value {

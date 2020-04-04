@@ -14,5 +14,9 @@ Here are the main features:
 - Added ability to add multiple interceptors in order
 - Added client tracing metadata propagation
 - Handy Server interceptors(Authentication, request cancelled, execution time, panic recovery)
-- Handy Client interceptors(Timeout logs, Tracing)
+- Handy Client interceptors(Timeout logs, Tracing, propagate headers)
+ 
+ ## Examples
+ 
+ Please refer to the /examples folder
  
