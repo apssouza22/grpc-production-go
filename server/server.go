@@ -25,10 +25,11 @@ type GrpcServer interface {
 
 //GRPC server builder
 type GrpcServerBuilder struct {
-	options            []grpc.ServerOption
-	enabledReflection  bool
-	shutdownHook       func()
-	enabledHealthCheck bool
+	options                   []grpc.ServerOption
+	enabledReflection         bool
+	shutdownHook              func()
+	enabledHealthCheck        bool
+	disableDefaultHealthCheck bool
 }
 
 type grpcServer struct {
@@ -48,6 +49,12 @@ func (sb *GrpcServerBuilder) AddOption(o grpc.ServerOption) {
 //Warning! We should not have this enabled in production
 func (sb *GrpcServerBuilder) EnableReflection(e bool) {
 	sb.enabledReflection = e
+}
+
+// DisableDefaultHealthCheck disables the default health check service
+//Warning! if you disable the default health check you must provide a custom health check service
+func (sb *GrpcServerBuilder) DisableDefaultHealthCheck(e bool) {
+	sb.disableDefaultHealthCheck = e
 }
 
 // ServerParameters is used to set keepalive and max-age parameters on the server-side.
@@ -75,7 +82,9 @@ func (sb *GrpcServerBuilder) SetUnaryInterceptors(interceptors []grpc.UnaryServe
 //Build is responsible for building a Fiji GRPC server
 func (sb *GrpcServerBuilder) Build() GrpcServer {
 	srv := grpc.NewServer(sb.options...)
-	grpc_health_v1.RegisterHealthServer(srv, health.NewServer())
+	if !sb.disableDefaultHealthCheck {
+		grpc_health_v1.RegisterHealthServer(srv, health.NewServer())
+	}
 
 	if sb.enabledReflection {
 		reflection.Register(srv)
