@@ -64,6 +64,10 @@ var (
 )
 
 func init() {
+	setUpCert()
+}
+
+func setUpCert() {
 	var err error
 	Cert, err = tls.X509KeyPair([]byte(certPEM), []byte(keyPEM))
 	if err != nil {
