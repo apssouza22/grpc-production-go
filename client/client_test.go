@@ -30,7 +30,7 @@ func TestSayHelloPassingContext(t *testing.T) {
 	clientBuilder.WithInsecure()
 	clientBuilder.WithContext(ctx)
 	clientBuilder.WithOptions(grpc.WithContextDialer(gtest.GetBufDialer(server.GetListener())))
-	clientConn, err := clientBuilder.GetConn("localhost", "50051")
+	clientConn, err := clientBuilder.GetConn("localhost:50051")
 
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
@@ -53,7 +53,7 @@ func TestSayHelloNotPassingContext(t *testing.T) {
 	clientBuilder := GrpcClientBuilder{}
 	clientBuilder.WithInsecure()
 	clientBuilder.WithOptions(grpc.WithContextDialer(gtest.GetBufDialer(server.GetListener())))
-	clientConn, err := clientBuilder.GetConn("localhost", "50051")
+	clientConn, err := clientBuilder.GetConn("localhost:50051")
 
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)

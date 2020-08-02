@@ -3,11 +3,12 @@ package grpc_client
 import (
 	"context"
 	"fmt"
+	"github.com/apssouza22/grpc-server-go/cert"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
-	"strings"
 )
 
 //GrpcClientConnBuilder is a builder to create GRPC connection to the GRPC Server
@@ -45,6 +46,11 @@ func (b *GrpcClientBuilder) WithInsecure() {
 	b.options = append(b.options, grpc.WithInsecure())
 }
 
+// WithTLS set the connection with a self signed TLS certificate
+func (b *GrpcClientBuilder) WithSelfSignedTLSCert() {
+	b.options = append(b.options, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(cert.CertPool, "")))
+}
+
 // WithKeepAliveParams set the keep alive params
 // ClientParameters is used to set keepalive parameters on the client-side.
 // These configure how the client will actively probe to notice when a
@@ -72,19 +78,18 @@ func (b *GrpcClientBuilder) WithStreamInterceptors(interceptors []grpc.StreamCli
 }
 
 // GetConn returns the client connection to the server
-func (b *GrpcClientBuilder) GetConn(addr string, port string) (*grpc.ClientConn, error) {
-	if addr == "" || port == "" {
-		return nil, fmt.Errorf("target connection parameter missing. address = %s, port = %s", addr, port)
+func (b *GrpcClientBuilder) GetConn(addr string) (*grpc.ClientConn, error) {
+	if addr == "" {
+		return nil, fmt.Errorf("target connection parameter missing. address = %s", addr)
 	}
-	target := strings.Join([]string{addr, port}, ":")
-	log.Debugf("Target to connect = %s", target)
+	log.Debugf("Target to connect = %s", addr)
 	ctx := b.ctx
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	cc, err := grpc.DialContext(ctx, target, b.options...)
+	cc, err := grpc.DialContext(ctx, addr, b.options...)
 	if err != nil {
-		return nil, fmt.Errorf("unable to connect to client. address = %s, port = %s. error = %+v", addr, port, err)
+		return nil, fmt.Errorf("unable to connect to client. address = %s. error = %+v", addr, err)
 	}
 	return cc, nil
 }

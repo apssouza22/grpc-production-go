@@ -3,9 +3,11 @@ package grpc_server
 import (
 	"errors"
 	"fmt"
+	"github.com/apssouza22/grpc-server-go/cert"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
@@ -77,6 +79,11 @@ func (sb *GrpcServerBuilder) SetStreamInterceptors(interceptors []grpc.StreamSer
 func (sb *GrpcServerBuilder) SetUnaryInterceptors(interceptors []grpc.UnaryServerInterceptor) {
 	chain := grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(interceptors...))
 	sb.AddOption(chain)
+}
+
+// SetSelfSignedTLS sets credentials for server connections
+func (sb *GrpcServerBuilder) SetSelfSignedTLS() {
+	sb.AddOption(grpc.Creds(credentials.NewServerTLSFromCert(&cert.Cert)))
 }
 
 //Build is responsible for building a Fiji GRPC server

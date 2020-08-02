@@ -16,7 +16,7 @@ func TimeoutLogExample() {
 	clientBuilder.WithContext(context.Background())
 	clientBuilder.WithStreamInterceptors(util.GetDefaultStreamClientInterceptors())
 	clientBuilder.WithUnaryInterceptors(util.GetDefaultUnaryClientInterceptors())
-	cc, err := clientBuilder.GetConn("localhost", "50051")
+	cc, err := clientBuilder.GetConn("localhost:50051")
 
 	defer cc.Close()
 	ctx := context.Background()
