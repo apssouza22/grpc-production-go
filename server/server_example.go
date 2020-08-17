@@ -33,6 +33,7 @@ func ServerInitialization() {
 	builder := GrpcServerBuilder{}
 	addInterceptors(&builder)
 	builder.EnableReflection(true)
+	//builder.SetSelfSignedTLS()
 	s := builder.Build()
 	s.RegisterService(serviceRegister)
 	err := s.Start("0.0.0.0", 50051)

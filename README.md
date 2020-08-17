@@ -16,6 +16,7 @@ Here are the main features:
 - Handy Server interceptors(Authentication, request cancelled, execution time, panic recovery)
 - Handy Client interceptors(Timeout logs, Tracing, propagate headers)
 - Secure connection with self signed certificate
+- Client TLS with insecure connection support 
  
  ## Examples
  
