@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/apssouza22/grpc-server-go/tlscert"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -54,11 +53,6 @@ func (b *GrpcClientBuilder) WithInsecure() {
 // Without this, Dial returns immediately and connecting the server happens in background.
 func (b *GrpcClientBuilder) WithBlock() {
 	b.options = append(b.options, grpc.WithBlock())
-}
-
-// WithTLS set the connection with a self signed TLS certificate
-func (b *GrpcClientBuilder) WithSelfSignedTLSCert() {
-	b.options = append(b.options, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(tlscert.CertPool, "")))
 }
 
 // WithKeepAliveParams set the keep alive params
