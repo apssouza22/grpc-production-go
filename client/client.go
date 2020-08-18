@@ -4,16 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
-	"github.com/apssouza22/grpc-server-go/cert"
+	"github.com/apssouza22/grpc-server-go/tlscert"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
-	"io/ioutil"
-	"net"
 )
 
 //GrpcClientConnBuilder is a builder to create GRPC connection to the GRPC Server
@@ -53,9 +50,15 @@ func (b *GrpcClientBuilder) WithInsecure() {
 	b.options = append(b.options, grpc.WithInsecure())
 }
 
+// WithBlock the dialing blocks until the  underlying connection is up.
+// Without this, Dial returns immediately and connecting the server happens in background.
+func (b *GrpcClientBuilder) WithBlock() {
+	b.options = append(b.options, grpc.WithBlock())
+}
+
 // WithTLS set the connection with a self signed TLS certificate
 func (b *GrpcClientBuilder) WithSelfSignedTLSCert() {
-	b.options = append(b.options, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(cert.CertPool, "")))
+	b.options = append(b.options, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(tlscert.CertPool, "")))
 }
 
 // WithKeepAliveParams set the keep alive params
@@ -84,46 +87,17 @@ func (b *GrpcClientBuilder) WithStreamInterceptors(interceptors []grpc.StreamCli
 	b.options = append(b.options, grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient(interceptors...)))
 }
 
-// ClientTransportCredentials builds transport credentials for a gRPC client using the
-// given properties. If cacertFile is blank, only standard trusted certs are used to
-// verify the server certs. If clientCertFile is blank, the client will not use a client
-// certificate. If clientCertFile is not blank then clientKeyFile must not be blank.
-func (b *GrpcClientBuilder) WithClientTransportCredentials(insecureSkipVerify bool, cacertFile, clientCertFile, clientKeyFile string) {
+// ClientTransportCredentials builds transport credentials for a gRPC client using the given properties.
+func (b *GrpcClientBuilder) WithClientTransportCredentials(insecureSkipVerify bool, certPool *x509.CertPool) {
 	var tlsConf tls.Config
-
-	if clientCertFile != "" {
-		// Load the client certificates from disk
-		certificate, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
-		if err != nil {
-			b.err = fmt.Errorf("could not load client key pair: %v", err)
-			return
-		}
-		tlsConf.Certificates = []tls.Certificate{certificate}
-	}
 
 	if insecureSkipVerify {
 		tlsConf.InsecureSkipVerify = true
 		b.transportCredentials = credentials.NewTLS(&tlsConf)
 		return
 	}
-	if cacertFile != "" {
-		// Create a certificate pool from the certificate authority
-		certPool := x509.NewCertPool()
-		ca, err := ioutil.ReadFile(cacertFile)
-		if err != nil {
-			b.err = fmt.Errorf("could not read ca certificate: %v", err)
-			return
-		}
 
-		// Append the certificates from the CA
-		if ok := certPool.AppendCertsFromPEM(ca); !ok {
-			b.err = errors.New("failed to append ca certs")
-			return
-		}
-
-		tlsConf.RootCAs = certPool
-	}
-
+	tlsConf.RootCAs = certPool
 	b.transportCredentials = credentials.NewTLS(&tlsConf)
 }
 
@@ -133,117 +107,32 @@ func (b *GrpcClientBuilder) GetConn(addr string) (*grpc.ClientConn, error) {
 		return nil, fmt.Errorf("target connection parameter missing. address = %s", addr)
 	}
 	log.Debugf("Target to connect = %s", addr)
-	ctx := b.ctx
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	cc, err := grpc.DialContext(ctx, addr, b.options...)
+	cc, err := grpc.DialContext(b.getContext(), addr, b.options...)
+
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to client. address = %s. error = %+v", addr, err)
 	}
 	return cc, nil
 }
 
-// BlockingDial is a helper method to dial the given address, using optional TLS credentials,
-// and blocking until the returned connection is ready. If the given credentials are nil, the
-// connection will be insecure (plain-text).
-func (b *GrpcClientBuilder) GetBlockingConn(addr string) (*grpc.ClientConn, error) {
-	if b.err != nil {
-		return nil, fmt.Errorf("get gRPC connection failed: %w", b.err)
-	}
-	network := "tcp"
-	dial := newBlockingDial(b.ctx, network, addr, b.transportCredentials, b.options...)
-	return dial.getConn()
-}
-
-func newBlockingDial(
-	ctx context.Context,
-	network,
-	address string,
-	creds credentials.TransportCredentials,
-	opts ...grpc.DialOption,
-) blockingDial {
-	return blockingDial{
-		result:  make(chan interface{}, 1),
-		ctx:     ctx,
-		network: network,
-		address: address,
-		creds:   creds,
-		opts:    opts,
-	}
-
-}
-
-// BlockingDial is a helper method to dial the given address, using optional TLS credentials,
-// and blocking until the returned connection is ready. If the given credentials are nil, the
-// connection will be insecure (plain-text).
-type blockingDial struct {
-	result  chan interface{}
-	ctx     context.Context
-	network string
-	address string
-	creds   credentials.TransportCredentials
-	opts    []grpc.DialOption
-}
-
-func (d blockingDial) resultWriter(res interface{}) {
-	// non-blocking write: we only need the first result
-	select {
-	case d.result <- res:
-	default:
-	}
-}
-
-// grpc.Dial doesn't provide any information on permanent connection errors (like
-// TLS handshake failures). So in order to provide good error messages, we need a
-// custom dialer that can provide that info. That means we manage the TLS handshake.
-func (d blockingDial) customDialer(ctx context.Context, address string) (net.Conn, error) {
-	conn, err := (&net.Dialer{}).DialContext(ctx, d.network, address)
-	if err != nil {
-		d.resultWriter(err)
-		return nil, err
-	}
-	if d.creds != nil {
-		conn, _, err = d.creds.ClientHandshake(ctx, address, conn)
-		if err != nil {
-			d.resultWriter(err)
-			return nil, err
-		}
-	}
-	return conn, nil
-}
-
-func (d blockingDial) getConn() (*grpc.ClientConn, error) {
-	// Even with grpc.FailOnNonTempDialError, this call will usually timeout in
-	// the face of TLS handshake errors. So we can't rely on grpc.WithBlock() to
-	// know when we're done. So we run it in a goroutine and then use result
-	// channel to either get the channel or fail-fast.
-	go d.dial()
-
-	select {
-	case res := <-d.result:
-		if conn, ok := res.(*grpc.ClientConn); ok {
-			return conn, nil
-		}
-		return nil, res.(error)
-	case <-d.ctx.Done():
-		return nil, d.ctx.Err()
-	}
-}
-
-func (d blockingDial) dial() {
-	opts := append(d.opts,
-		grpc.WithBlock(),
-		grpc.FailOnNonTempDialError(true),
-		grpc.WithContextDialer(d.customDialer),
-		grpc.WithInsecure(), // we are handling TLS, so tell grpc not to
+// GetTlsConn returns client connection to the server
+func (b *GrpcClientBuilder) GetTlsConn(addr string) (*grpc.ClientConn, error) {
+	b.options = append(b.options, grpc.WithTransportCredentials(b.transportCredentials))
+	cc, err := grpc.DialContext(
+		b.getContext(),
+		addr,
+		b.options...,
 	)
-	conn, err := grpc.DialContext(d.ctx, d.address, opts...)
-	var res interface{}
 	if err != nil {
-		res = err
-	} else {
-		res = conn
+		return nil, fmt.Errorf("failed to get tls conn. Unable to connect to client. address = %s: %w", addr, err)
 	}
-	d.resultWriter(res)
+	return cc, nil
+}
+
+func (b *GrpcClientBuilder) getContext() context.Context {
+	ctx := b.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return ctx
 }

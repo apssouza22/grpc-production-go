@@ -3,8 +3,10 @@
 package testing
 
 import (
+	"crypto/tls"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/test/bufconn"
 	"log"
 	"os"
@@ -45,6 +47,11 @@ func (sb *GrpcInProcessingServerBuilder) SetStreamInterceptors(interceptors []gr
 func (sb *GrpcInProcessingServerBuilder) SetUnaryInterceptors(interceptors []grpc.UnaryServerInterceptor) {
 	chain := grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(interceptors...))
 	sb.AddOption(chain)
+}
+
+// SetTlsCert sets credentials for server connections
+func (sb *GrpcInProcessingServerBuilder) SetTlsCert(cert *tls.Certificate) {
+	sb.AddOption(grpc.Creds(credentials.NewServerTLSFromCert(cert)))
 }
 
 //Build is responsible for building a Fiji GRPC server

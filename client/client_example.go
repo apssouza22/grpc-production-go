@@ -2,6 +2,7 @@ package grpc_client
 
 import (
 	"context"
+	"github.com/apssouza22/grpc-server-go/tlscert"
 	"github.com/apssouza22/grpc-server-go/util"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -49,10 +50,10 @@ func TimeoutLogExample() {
 func TLSConnExample() {
 	clientBuilder := GrpcClientBuilder{}
 	clientBuilder.WithContext(context.Background())
-	clientBuilder.WithClientTransportCredentials(true, "", "", "")
+	clientBuilder.WithClientTransportCredentials(true, tlscert.CertPool)
 	clientBuilder.WithStreamInterceptors(util.GetDefaultStreamClientInterceptors())
 	clientBuilder.WithUnaryInterceptors(util.GetDefaultUnaryClientInterceptors())
-	cc, err := clientBuilder.GetBlockingConn("localhost:50051")
+	cc, err := clientBuilder.GetTlsConn("localhost:50051")
 
 	defer cc.Close()
 	ctx := context.Background()

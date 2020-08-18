@@ -1,4 +1,4 @@
-package cert
+package tlscert
 
 import (
 	"crypto/tls"

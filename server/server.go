@@ -1,9 +1,9 @@
 package grpc_server
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/apssouza22/grpc-server-go/cert"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -23,6 +23,7 @@ type GrpcServer interface {
 	Start(address string, port uint) error
 	AwaitTermination(shutdownHook func())
 	RegisterService(reg func(*grpc.Server))
+	GetListener() net.Listener
 }
 
 //GRPC server builder
@@ -37,6 +38,10 @@ type GrpcServerBuilder struct {
 type grpcServer struct {
 	server   *grpc.Server
 	listener net.Listener
+}
+
+func (s grpcServer) GetListener() net.Listener {
+	return s.listener
 }
 
 //DialOption configures how we set up the connection.
@@ -81,9 +86,9 @@ func (sb *GrpcServerBuilder) SetUnaryInterceptors(interceptors []grpc.UnaryServe
 	sb.AddOption(chain)
 }
 
-// SetSelfSignedTLS sets credentials for server connections
-func (sb *GrpcServerBuilder) SetSelfSignedTLS() {
-	sb.AddOption(grpc.Creds(credentials.NewServerTLSFromCert(&cert.Cert)))
+// SetTlsCert sets credentials for server connections
+func (sb *GrpcServerBuilder) SetTlsCert(cert *tls.Certificate) {
+	sb.AddOption(grpc.Creds(credentials.NewServerTLSFromCert(cert)))
 }
 
 //Build is responsible for building a Fiji GRPC server
