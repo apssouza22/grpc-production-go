@@ -2,7 +2,7 @@ package interceptors
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
+	logrus "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -86,21 +86,41 @@ func logRequest(start time.Time, requestMethod string, userAgents []string, ip n
 	if isHealthCheckRequest(requestMethod) {
 		return
 	}
-	status := "OK"
-	if err != nil {
-		status = "KO"
+	sts := status.Convert(err)
+	auditEntry := logrus.Fields{
+		"user-agent":  userAgents,
+		"peer":        ip,
+		"took_ns":     time.Since(start),
+		"status":      sts.Code().String(),
+		"err":         sts.Message(),
+		"err-details": sts.Details(),
 	}
-	auditEntry := log.Fields{
-		"user-agent": userAgents,
-		"peer":       ip,
-		"took_ns":    time.Since(start),
-		"status":     status,
-		"err":        err,
-	}
-	if err != nil {
-		log.WithFields(auditEntry).Error(fullMethod)
-	} else {
-		log.WithFields(auditEntry).Info(fullMethod)
+	log := logrus.WithFields(auditEntry)
+
+	switch sts.Code() {
+
+	case codes.OK:
+		log.Info("gRPC call succeeded")
+
+	// Caused by invalid client requests (http 4xx equiv.)
+	case codes.Canceled,
+		codes.InvalidArgument,
+		codes.NotFound,
+		codes.AlreadyExists,
+		codes.PermissionDenied,
+		codes.FailedPrecondition,
+		codes.Aborted,
+		codes.OutOfRange,
+		codes.Unimplemented, // usually caused by client requesting invalid operation (even though it matches 501)
+		codes.Unauthenticated:
+
+		log.Warn("gRPC call failed")
+
+	// Server errors (http 5xx equiv.):
+	// Unknown, DeadlineExceeded, ResourceExhausted, Internal, Unavailable, DataLoss
+	// (ResourceExhausted is somewhere in between, from user quota exhausted to OOM, rather have it on error for now)
+	default:
+		log.Error("gRPC call errored")
 	}
 }
 
