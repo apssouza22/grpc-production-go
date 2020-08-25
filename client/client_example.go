@@ -50,7 +50,7 @@ func TimeoutLogExample() {
 func TLSConnExample() {
 	clientBuilder := GrpcClientBuilder{}
 	clientBuilder.WithContext(context.Background())
-	clientBuilder.WithClientTransportCredentials(true, tlscert.CertPool)
+	clientBuilder.WithClientTransportCredentials(false, tlscert.CertPool)
 	clientBuilder.WithStreamInterceptors(util.GetDefaultStreamClientInterceptors())
 	clientBuilder.WithUnaryInterceptors(util.GetDefaultUnaryClientInterceptors())
 	cc, err := clientBuilder.GetTlsConn("localhost:50051")

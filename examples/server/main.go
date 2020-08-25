@@ -6,4 +6,5 @@ import (
 
 func main() {
 	grpcserver.ServerInitialization()
+	//grpcserver.ServerInitializationWithTLS()
 }

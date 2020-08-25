@@ -2,6 +2,7 @@ package grpc_server
 
 import (
 	"context"
+	"github.com/apssouza22/grpc-server-go/tlscert"
 	"github.com/apssouza22/grpc-server-go/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
@@ -33,7 +34,27 @@ func ServerInitialization() {
 	builder := GrpcServerBuilder{}
 	addInterceptors(&builder)
 	builder.EnableReflection(true)
-	//builder.SetSelfSignedTLS()
+	s := builder.Build()
+	s.RegisterService(serviceRegister)
+	err := s.Start("0.0.0.0", 50051)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+	s.AwaitTermination(func() {
+		log.Print("Shutting down the server")
+	})
+}
+
+func ServerInitializationWithTLS() {
+	// if we crash the go code, we get the file name and line number
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	builder := GrpcServerBuilder{}
+	addInterceptors(&builder)
+	builder.EnableReflection(true)
+
+	builder.SetTlsCert(&tlscert.Cert)
+
 	s := builder.Build()
 	s.RegisterService(serviceRegister)
 	err := s.Start("0.0.0.0", 50051)
