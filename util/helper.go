@@ -1,8 +1,8 @@
 package util
 
 import (
-	"github.com/apssouza22/grpc-server-go/clientinterceptor"
-	interceptors "github.com/apssouza22/grpc-server-go/serverinterceptor"
+	"github.com/apssouza22/grpc-production-go/clientinterceptor"
+	interceptors "github.com/apssouza22/grpc-production-go/serverinterceptor"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"

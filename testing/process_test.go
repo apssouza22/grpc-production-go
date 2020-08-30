@@ -2,8 +2,8 @@ package testing
 
 import (
 	"context"
-	"github.com/apssouza22/grpc-server-go/testdata"
-	"github.com/apssouza22/grpc-server-go/util"
+	"github.com/apssouza22/grpc-production-go/testdata"
+	"github.com/apssouza22/grpc-production-go/util"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
