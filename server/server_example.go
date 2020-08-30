@@ -2,8 +2,8 @@ package grpc_server
 
 import (
 	"context"
+	"github.com/apssouza22/grpc-production-go/grpcutils"
 	"github.com/apssouza22/grpc-production-go/tlscert"
-	"github.com/apssouza22/grpc-production-go/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/metadata"
@@ -71,6 +71,6 @@ func serviceRegister(sv *grpc.Server) {
 }
 
 func addInterceptors(s *GrpcServerBuilder) {
-	s.SetUnaryInterceptors(util.GetDefaultUnaryServerInterceptors())
-	s.SetStreamInterceptors(util.GetDefaultStreamServerInterceptors())
+	s.SetUnaryInterceptors(grpcutils.GetDefaultUnaryServerInterceptors())
+	s.SetStreamInterceptors(grpcutils.GetDefaultStreamServerInterceptors())
 }

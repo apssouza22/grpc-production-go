@@ -2,8 +2,8 @@ package testing
 
 import (
 	"context"
+	"github.com/apssouza22/grpc-production-go/grpcutils"
 	"github.com/apssouza22/grpc-production-go/testdata"
-	"github.com/apssouza22/grpc-production-go/util"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
@@ -14,7 +14,7 @@ var server GrpcInProcessingServer
 
 func serverStart() {
 	builder := GrpcInProcessingServerBuilder{}
-	builder.SetUnaryInterceptors(util.GetDefaultUnaryServerInterceptors())
+	builder.SetUnaryInterceptors(grpcutils.GetDefaultUnaryServerInterceptors())
 	server = builder.Build()
 	server.RegisterService(func(server *grpc.Server) {
 		helloworld.RegisterGreeterServer(server, &testdata.MockedService{})

@@ -2,11 +2,11 @@ package grpc_client
 
 import (
 	"context"
+	"github.com/apssouza22/grpc-production-go/grpcutils"
 	grpc_server "github.com/apssouza22/grpc-production-go/server"
 	"github.com/apssouza22/grpc-production-go/testdata"
 	gtest "github.com/apssouza22/grpc-production-go/testing"
 	"github.com/apssouza22/grpc-production-go/tlscert"
-	"github.com/apssouza22/grpc-production-go/util"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
@@ -17,7 +17,7 @@ var server gtest.GrpcInProcessingServer
 
 func startServer() {
 	builder := gtest.GrpcInProcessingServerBuilder{}
-	builder.SetUnaryInterceptors(util.GetDefaultUnaryServerInterceptors())
+	builder.SetUnaryInterceptors(grpcutils.GetDefaultUnaryServerInterceptors())
 	server = builder.Build()
 	server.RegisterService(func(server *grpc.Server) {
 		helloworld.RegisterGreeterServer(server, &testdata.MockedService{})
@@ -26,7 +26,7 @@ func startServer() {
 }
 func startServerWithTLS() grpc_server.GrpcServer {
 	builder := grpc_server.GrpcServerBuilder{}
-	builder.SetUnaryInterceptors(util.GetDefaultUnaryServerInterceptors())
+	builder.SetUnaryInterceptors(grpcutils.GetDefaultUnaryServerInterceptors())
 	builder.SetTlsCert(&tlscert.Cert)
 	svr := builder.Build()
 	svr.RegisterService(func(server *grpc.Server) {

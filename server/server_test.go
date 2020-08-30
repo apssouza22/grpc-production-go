@@ -1,8 +1,8 @@
 package grpc_server
 
 import (
+	"github.com/apssouza22/grpc-production-go/grpcutils"
 	"github.com/apssouza22/grpc-production-go/tlscert"
-	"github.com/apssouza22/grpc-production-go/util"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -12,8 +12,8 @@ func TestBuildGrpcServer(t *testing.T) {
 	builder.SetTlsCert(&tlscert.Cert)
 	builder.DisableDefaultHealthCheck(true)
 	builder.EnableReflection(true)
-	builder.SetStreamInterceptors(util.GetDefaultStreamServerInterceptors())
-	builder.SetUnaryInterceptors(util.GetDefaultUnaryServerInterceptors())
+	builder.SetStreamInterceptors(grpcutils.GetDefaultStreamServerInterceptors())
+	builder.SetUnaryInterceptors(grpcutils.GetDefaultUnaryServerInterceptors())
 	server := builder.Build()
 	assert.NotNil(t, server)
 }

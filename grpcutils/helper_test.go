@@ -1,4 +1,4 @@
-package util
+package grpcutils
 
 import (
 	"github.com/stretchr/testify/assert"

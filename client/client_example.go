@@ -2,8 +2,8 @@ package grpc_client
 
 import (
 	"context"
+	"github.com/apssouza22/grpc-production-go/grpcutils"
 	"github.com/apssouza22/grpc-production-go/tlscert"
-	"github.com/apssouza22/grpc-production-go/util"
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
@@ -15,8 +15,8 @@ func TimeoutLogExample() {
 	clientBuilder := GrpcClientBuilder{}
 	clientBuilder.WithInsecure()
 	clientBuilder.WithContext(context.Background())
-	clientBuilder.WithStreamInterceptors(util.GetDefaultStreamClientInterceptors())
-	clientBuilder.WithUnaryInterceptors(util.GetDefaultUnaryClientInterceptors())
+	clientBuilder.WithStreamInterceptors(grpcutils.GetDefaultStreamClientInterceptors())
+	clientBuilder.WithUnaryInterceptors(grpcutils.GetDefaultUnaryClientInterceptors())
 	cc, err := clientBuilder.GetConn("localhost:50051")
 
 	defer cc.Close()
@@ -51,8 +51,8 @@ func TLSConnExample() {
 	clientBuilder := GrpcClientBuilder{}
 	clientBuilder.WithContext(context.Background())
 	clientBuilder.WithClientTransportCredentials(false, tlscert.CertPool)
-	clientBuilder.WithStreamInterceptors(util.GetDefaultStreamClientInterceptors())
-	clientBuilder.WithUnaryInterceptors(util.GetDefaultUnaryClientInterceptors())
+	clientBuilder.WithStreamInterceptors(grpcutils.GetDefaultStreamClientInterceptors())
+	clientBuilder.WithUnaryInterceptors(grpcutils.GetDefaultUnaryClientInterceptors())
 	cc, err := clientBuilder.GetTlsConn("localhost:50051")
 
 	defer cc.Close()
