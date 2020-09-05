@@ -20,11 +20,11 @@ type GrpcClientConnBuilder interface {
 	WithUnaryInterceptors(interceptors []grpc.UnaryClientInterceptor)
 	WithStreamInterceptors(interceptors []grpc.StreamClientInterceptor)
 	WithKeepAliveParams(params keepalive.ClientParameters)
-	GetConn(addr string, port string) (*grpc.ClientConn, error)
+	GetConn(addr string) (*grpc.ClientConn, error)
 }
 
 //GRPC client builder
-type GrpcClientBuilder struct {
+type GrpcConnBuilder struct {
 	options              []grpc.DialOption
 	enabledReflection    bool
 	shutdownHook         func()
@@ -35,23 +35,23 @@ type GrpcClientBuilder struct {
 }
 
 // WithContext set the context to be used in the dial
-func (b *GrpcClientBuilder) WithContext(ctx context.Context) {
+func (b *GrpcConnBuilder) WithContext(ctx context.Context) {
 	b.ctx = ctx
 }
 
 // WithOptions set dial options
-func (b *GrpcClientBuilder) WithOptions(opts ...grpc.DialOption) {
+func (b *GrpcConnBuilder) WithOptions(opts ...grpc.DialOption) {
 	b.options = append(b.options, opts...)
 }
 
 // WithInsecure set the connection as insecure
-func (b *GrpcClientBuilder) WithInsecure() {
+func (b *GrpcConnBuilder) WithInsecure() {
 	b.options = append(b.options, grpc.WithInsecure())
 }
 
 // WithBlock the dialing blocks until the  underlying connection is up.
 // Without this, Dial returns immediately and connecting the server happens in background.
-func (b *GrpcClientBuilder) WithBlock() {
+func (b *GrpcConnBuilder) WithBlock() {
 	b.options = append(b.options, grpc.WithBlock())
 }
 
@@ -62,7 +62,7 @@ func (b *GrpcClientBuilder) WithBlock() {
 // liveness of the connection. Make sure these parameters are set in
 // coordination with the keepalive policy on the server, as incompatible
 // settings can result in closing of connection.
-func (b *GrpcClientBuilder) WithKeepAliveParams(params keepalive.ClientParameters) {
+func (b *GrpcConnBuilder) WithKeepAliveParams(params keepalive.ClientParameters) {
 	keepAlive := grpc.WithKeepaliveParams(params)
 	b.options = append(b.options, keepAlive)
 }
@@ -70,19 +70,19 @@ func (b *GrpcClientBuilder) WithKeepAliveParams(params keepalive.ClientParameter
 // WithUnaryInterceptors set a list of interceptors to the Grpc client for unary connection
 // By default, gRPC doesn't allow one to have more than one interceptor either on the client nor on the server side.
 // By using `grpc_middleware` we are able to provides convenient method to add a list of interceptors
-func (b *GrpcClientBuilder) WithUnaryInterceptors(interceptors []grpc.UnaryClientInterceptor) {
+func (b *GrpcConnBuilder) WithUnaryInterceptors(interceptors []grpc.UnaryClientInterceptor) {
 	b.options = append(b.options, grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(interceptors...)))
 }
 
 // WithUnaryInterceptors set a list of interceptors to the Grpc client for stream connection
 // By default, gRPC doesn't allow one to have more than one interceptor either on the client nor on the server side.
 // By using `grpc_middleware` we are able to provides convenient method to add a list of interceptors
-func (b *GrpcClientBuilder) WithStreamInterceptors(interceptors []grpc.StreamClientInterceptor) {
+func (b *GrpcConnBuilder) WithStreamInterceptors(interceptors []grpc.StreamClientInterceptor) {
 	b.options = append(b.options, grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient(interceptors...)))
 }
 
 // ClientTransportCredentials builds transport credentials for a gRPC client using the given properties.
-func (b *GrpcClientBuilder) WithClientTransportCredentials(insecureSkipVerify bool, certPool *x509.CertPool) {
+func (b *GrpcConnBuilder) WithClientTransportCredentials(insecureSkipVerify bool, certPool *x509.CertPool) {
 	var tlsConf tls.Config
 
 	if insecureSkipVerify {
@@ -96,7 +96,7 @@ func (b *GrpcClientBuilder) WithClientTransportCredentials(insecureSkipVerify bo
 }
 
 // GetConn returns the client connection to the server
-func (b *GrpcClientBuilder) GetConn(addr string) (*grpc.ClientConn, error) {
+func (b *GrpcConnBuilder) GetConn(addr string) (*grpc.ClientConn, error) {
 	if addr == "" {
 		return nil, fmt.Errorf("target connection parameter missing. address = %s", addr)
 	}
@@ -110,7 +110,7 @@ func (b *GrpcClientBuilder) GetConn(addr string) (*grpc.ClientConn, error) {
 }
 
 // GetTlsConn returns client connection to the server
-func (b *GrpcClientBuilder) GetTlsConn(addr string) (*grpc.ClientConn, error) {
+func (b *GrpcConnBuilder) GetTlsConn(addr string) (*grpc.ClientConn, error) {
 	b.options = append(b.options, grpc.WithTransportCredentials(b.transportCredentials))
 	cc, err := grpc.DialContext(
 		b.getContext(),
@@ -123,7 +123,7 @@ func (b *GrpcClientBuilder) GetTlsConn(addr string) (*grpc.ClientConn, error) {
 	return cc, nil
 }
 
-func (b *GrpcClientBuilder) getContext() context.Context {
+func (b *GrpcConnBuilder) getContext() context.Context {
 	ctx := b.ctx
 	if ctx == nil {
 		ctx = context.Background()

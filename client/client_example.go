@@ -12,7 +12,7 @@ import (
 )
 
 func TimeoutLogExample() {
-	clientBuilder := GrpcClientBuilder{}
+	clientBuilder := GrpcConnBuilder{}
 	clientBuilder.WithInsecure()
 	clientBuilder.WithContext(context.Background())
 	clientBuilder.WithStreamInterceptors(grpcutils.GetDefaultStreamClientInterceptors())
@@ -48,7 +48,7 @@ func TimeoutLogExample() {
 }
 
 func TLSConnExample() {
-	clientBuilder := GrpcClientBuilder{}
+	clientBuilder := GrpcConnBuilder{}
 	clientBuilder.WithContext(context.Background())
 	clientBuilder.WithClientTransportCredentials(false, tlscert.CertPool)
 	clientBuilder.WithStreamInterceptors(grpcutils.GetDefaultStreamClientInterceptors())

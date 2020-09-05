@@ -39,7 +39,7 @@ func startServerWithTLS() grpc_server.GrpcServer {
 func TestSayHelloPassingContext(t *testing.T) {
 	startServer()
 	ctx := context.Background()
-	clientBuilder := GrpcClientBuilder{}
+	clientBuilder := GrpcConnBuilder{}
 	clientBuilder.WithInsecure()
 	clientBuilder.WithContext(ctx)
 	clientBuilder.WithOptions(grpc.WithContextDialer(gtest.GetBufDialer(server.GetListener())))
@@ -63,7 +63,7 @@ func TestSayHelloPassingContext(t *testing.T) {
 func TestSayHelloNotPassingContext(t *testing.T) {
 	startServer()
 	ctx := context.Background()
-	clientBuilder := GrpcClientBuilder{}
+	clientBuilder := GrpcConnBuilder{}
 	clientBuilder.WithInsecure()
 	clientBuilder.WithOptions(grpc.WithContextDialer(gtest.GetBufDialer(server.GetListener())))
 	clientConn, err := clientBuilder.GetConn("localhost:50051")
@@ -88,7 +88,7 @@ func TestTLSConnWithCert(t *testing.T) {
 	defer serverWithTLS.GetListener().Close()
 
 	ctx := context.Background()
-	clientBuilder := GrpcClientBuilder{}
+	clientBuilder := GrpcConnBuilder{}
 	clientBuilder.WithContext(ctx)
 	clientBuilder.WithBlock()
 	clientBuilder.WithClientTransportCredentials(false, tlscert.CertPool)
@@ -106,7 +106,7 @@ func TestTLSConnWithInsecure(t *testing.T) {
 	defer serverWithTLS.GetListener().Close()
 
 	ctx := context.Background()
-	clientBuilder := GrpcClientBuilder{}
+	clientBuilder := GrpcConnBuilder{}
 	clientBuilder.WithContext(ctx)
 	clientBuilder.WithBlock()
 	clientBuilder.WithClientTransportCredentials(true, nil)
