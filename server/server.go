@@ -20,7 +20,7 @@ import (
 
 //Fiji GRPC server interface
 type GrpcServer interface {
-	Start(address string, port uint) error
+	Start(address string) error
 	AwaitTermination(shutdownHook func())
 	RegisterService(reg func(*grpc.Server))
 	GetListener() net.Listener
@@ -110,10 +110,9 @@ func (s grpcServer) RegisterService(reg func(*grpc.Server)) {
 }
 
 // Start the GRPC server
-func (s *grpcServer) Start(address string, port uint) error {
+func (s *grpcServer) Start(addr string) error {
 	var err error
-	add := fmt.Sprintf("%s:%d", address, port)
-	s.listener, err = net.Listen("tcp", add)
+	s.listener, err = net.Listen("tcp", addr)
 
 	if err != nil {
 		msg := fmt.Sprintf("Failed to listen: %v", err)
@@ -122,7 +121,7 @@ func (s *grpcServer) Start(address string, port uint) error {
 
 	go s.serv()
 
-	log.Infof("grpcServer started on port: %d ", port)
+	log.Infof("gRPC Server started on %s ", addr)
 	return nil
 }
 

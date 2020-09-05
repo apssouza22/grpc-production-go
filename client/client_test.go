@@ -32,7 +32,7 @@ func startServerWithTLS() grpc_server.GrpcServer {
 	svr.RegisterService(func(server *grpc.Server) {
 		helloworld.RegisterGreeterServer(server, &testdata.MockedService{})
 	})
-	svr.Start("localhost", 8989)
+	svr.Start("localhost:8989")
 	return svr
 }
 

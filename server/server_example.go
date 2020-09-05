@@ -36,7 +36,7 @@ func ServerInitialization() {
 	builder.EnableReflection(true)
 	s := builder.Build()
 	s.RegisterService(serviceRegister)
-	err := s.Start("0.0.0.0", 50051)
+	err := s.Start("0.0.0.0:50051")
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -57,7 +57,7 @@ func ServerInitializationWithTLS() {
 
 	s := builder.Build()
 	s.RegisterService(serviceRegister)
-	err := s.Start("0.0.0.0", 50051)
+	err := s.Start("0.0.0.0:50051")
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
