@@ -1,6 +1,6 @@
 # GRPC for production [![Build Status](https://travis-ci.org/apssouza22/grpc-server-go.svg?branch=master)](https://travis-ci.org/apssouza22/grpc-server-go) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=apssouza22_grpc-server-go&metric=alert_status)](https://sonarcloud.io/dashboard?id=apssouza22_grpc-server-go) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=apssouza22_grpc-server-go&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=apssouza22_grpc-server-go)
 
-Read more about the project [here!](https://medium.com/@alexsandrosouza/grpc-for-production-go-2f62f334824)
+Read more about the project [here!](https://dev.to/apssouza22/grpc-for-production-golang-1611)
 
 This project abstracts away the details of the GRPC server and client configuration. 
 
